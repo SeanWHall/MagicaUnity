@@ -40,7 +40,12 @@ namespace MagicaVoxel
         
         private static void ProcessRGBA(VoxFile File, BinaryReader Reader, ChunkInfo Info)
         {
-            
+            byte[] Pallete = File.Palette = new byte [255 * 4];
+            for (int i = 0; i < 255; i++)
+            {
+                for (int c = 0; c < 4; c++)
+                    Pallete[i * 4 + c] = Reader.ReadByte();
+            }
         }
 
         private static void ProcessXYZI(VoxFile File, BinaryReader Reader, ChunkInfo Info)
