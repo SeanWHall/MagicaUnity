@@ -1,0 +1,17 @@
+{
+    "name": "MagicaUnity.Editor",
+    "references": [
+        "GUID:e7b20b7192f146143829c141dc980a95"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
