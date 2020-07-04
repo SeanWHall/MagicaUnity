@@ -301,6 +301,8 @@ namespace MagicaVoxel
         
         public VoxModel[] Models;
         public Byte[]     Palette;
+        
+        public Color32 GetColor(int Index) => new Color32(Palette[Index * 4 + 0], Palette[Index * 4 + 1], Palette[Index * 4 + 2], Palette[Index * 4 + 3]);
     }
     
     [Serializable]

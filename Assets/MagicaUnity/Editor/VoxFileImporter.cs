@@ -40,8 +40,8 @@ namespace MagicaVoxel
         
         private static void ProcessRGBA(VoxFile File, BinaryReader Reader, ChunkInfo Info)
         {
-            byte[] Pallete = File.Palette = new byte [255 * 4];
-            for (int i = 0; i < 255; i++)
+            byte[] Pallete = File.Palette = new byte [256 * 4];
+            for (int i = 0; i < 256; i++)
             {
                 for (int c = 0; c < 4; c++)
                     Pallete[i * 4 + c] = Reader.ReadByte();
@@ -120,6 +120,9 @@ namespace MagicaVoxel
                 if(ReadHeader(Reader)) //Make sure the header is valid
                     ProcessChunk(VoxAsset, Reader, new ChunkInfo(Reader)); //Read Main Chunk
             }
+
+            if (VoxAsset.Palette == null) //If no Palette has been read, assign the default pallete
+                VoxAsset.Palette = VoxFile.Default_Palette;
             
             ctx.AddObjectToAsset("VoxFile", VoxAsset);
             ctx.SetMainObject(VoxAsset);
