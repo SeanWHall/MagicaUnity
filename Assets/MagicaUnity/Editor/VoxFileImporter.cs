@@ -52,18 +52,20 @@ namespace MagicaUnity
             for (int i = 0; i < numModels; i++)
             {
                 VoxModel Model = File.Models[i];
-                if(Model.Voxels != null)
+                if(Model.Data != null)
                     continue;
 
-                Model.Voxels_Len = Reader.ReadInt32();
-                Model.Voxels = new Byte[Model.Voxels_Len * 4];
+                Model.Data = new Byte[Model.Size_X * Model.Size_Y * Model.Size_Z];
                 
-                for (int v = 0; v < Model.Voxels_Len; v++)
+                int Voxels_Len = Reader.ReadInt32();
+                for (int v = 0; v < Voxels_Len; v++)
                 {
-                    Model.Voxels[v * 4 + 0] = Reader.ReadByte(); //X
-                    Model.Voxels[v * 4 + 1] = Reader.ReadByte(); //Y
-                    Model.Voxels[v * 4 + 2] = Reader.ReadByte(); //Z
-                    Model.Voxels[v * 4 + 3] = Reader.ReadByte(); //Color
+                    byte X     = Reader.ReadByte();
+                    byte Y     = Reader.ReadByte();
+                    byte Z     = Reader.ReadByte();
+                    byte Color = Reader.ReadByte();
+                    
+                    Model.SetIndex(X, Y, Z, Color);
                 }
 
                 return;
@@ -82,9 +84,9 @@ namespace MagicaUnity
                     continue;
 
                 VoxModel Model = File.Models[i] = new VoxModel();
-                Model.Size_X = Reader.ReadInt32();
-                Model.Size_Y = Reader.ReadInt32();
-                Model.Size_Z = Reader.ReadInt32();
+                Model.Size_X = (byte)Reader.ReadInt32();
+                Model.Size_Y = (byte)Reader.ReadInt32();
+                Model.Size_Z = (byte)Reader.ReadInt32();
                 return;
             }
         }
