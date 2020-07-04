@@ -9,16 +9,14 @@ using Unity.Mathematics;
 using UnityEditor;
 using UnityEditor.Experimental.AssetImporters;
 
-namespace MagicaVoxel
+namespace MagicaUnity
 {
     [CustomEditor(typeof(VoxFileImporterEditor))]
     public class VoxFileImporterEditor : Editor
     {
         
     }
-    
-    
-    
+
     [ScriptedImporter(1, "vox")]
     public class VoxFileImporter : ScriptedImporter
     {

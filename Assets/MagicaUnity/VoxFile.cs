@@ -2,7 +2,7 @@
 
 using UnityEngine;
 
-namespace MagicaVoxel
+namespace MagicaUnity
 {
     public class VoxFile : ScriptableObject
     {

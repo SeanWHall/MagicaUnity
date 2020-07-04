@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace MagicaVoxel
+namespace MagicaUnity
 {
     [CustomEditor(typeof(VoxFile))]
     public class VoxFileEditor : Editor
