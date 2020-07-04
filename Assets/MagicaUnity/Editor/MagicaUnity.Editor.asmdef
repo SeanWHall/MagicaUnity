@@ -1,7 +1,8 @@
 {
     "name": "MagicaUnity.Editor",
     "references": [
-        "GUID:e7b20b7192f146143829c141dc980a95"
+        "GUID:e7b20b7192f146143829c141dc980a95",
+        "GUID:d8b63aba1907145bea998dd612889d6b"
     ],
     "includePlatforms": [
         "Editor"
