@@ -65,7 +65,7 @@ namespace MagicaUnity
                     byte Z     = Reader.ReadByte();
                     byte Color = Reader.ReadByte();
                     
-                    Model.SetIndex(X, Y, Z, Color);
+                    Model.SetIndex(new VoxPos(X, Y, Z), Color);
                 }
 
                 return;

@@ -317,6 +317,30 @@ namespace MagicaUnity
         Forward   = 1 << 5,
         Backwards = 1 << 6
     }
+
+    public static class eDirectionExtensions
+    {
+        public static Vector3Int GetOffset(this eDirection Direction)
+        {
+            switch (Direction)
+            {
+                case eDirection.Up:
+                    return new Vector3Int(0, 1, 0);
+                case eDirection.Down:
+                    return new Vector3Int(0, -1, 0);
+                case eDirection.Left:
+                    return new Vector3Int(1, 0, 0);
+                case eDirection.Right:
+                    return new Vector3Int(1, 0, 0);
+                case eDirection.Forward:
+                    return new Vector3Int(0, 0, 1);
+                case eDirection.Backwards:
+                    return new Vector3Int(0, 0, -1);
+            }
+            
+            return Vector3Int.zero;
+        }
+    }
     
     [Serializable]
     public class VoxModel
@@ -328,24 +352,26 @@ namespace MagicaUnity
         public byte[] Data; //0 = No Voxel
         public Mesh Vox_Mesh;
 
-        public Voxel GetVoxel(int i)
-        {
-            To3D(i, out byte X, out byte Y, out byte Z);
-            return GetVoxel(X, Y, Z);
-        }
+        public bool IsWithin(VoxPos Pos) => Pos.X < Size_X && Pos.Y < Size_Y && Pos.Z < Size_Z;
         
-        public Voxel GetVoxel(byte X, byte Y, byte Z)
+        public Voxel? GetVoxel(VoxPos Pos)
         {
+            if (!IsWithin(Pos))
+                return null;
+            
+            byte Index = Data[To1D(Pos)];
+            if (Index == 0)
+                return null;
+            
             return new Voxel
             {
-                X = X,
-                Y = Y,
-                Z = Z,
-                Index = Data[To1D(X, Y, Z)]
+                Position   = Pos,
+                Index      = Index,
+                Neighbours = GetNeighbours(Pos)
             };
         }
 
-        public eDirection GetNeighbours(byte X, byte Y, byte Z)
+        public eDirection GetNeighbours(VoxPos Position)
         {
             eDirection Directions = 0;
 
@@ -362,87 +388,102 @@ namespace MagicaUnity
 
             bool Check(int X_Offset, int Y_Offset, int Z_Offset)
             {
-                int Neighbour_X = X + X_Offset;
-                int Neighbour_Y = Y + Y_Offset;
-                int Neighbour_Z = Z + Z_Offset;
-
-                if (Neighbour_X < Byte.MinValue || Neighbour_X >= Byte.MaxValue) return false;
-                if (Neighbour_Y < Byte.MinValue || Neighbour_Y >= Byte.MaxValue) return false;
-                if (Neighbour_Z < Byte.MinValue || Neighbour_Z >= Byte.MaxValue) return false;
-
-                return Data[To1D((byte) Neighbour_X, (byte) Neighbour_Y, (byte) Neighbour_Z)] != 0;
+                int Neighbour_X = Position.X + X_Offset;
+                int Neighbour_Y = Position.Y + Y_Offset;
+                int Neighbour_Z = Position.Z + Z_Offset;
+                
+                if (!VoxPos.IsValidVoxPos(Neighbour_X, Neighbour_Y, Neighbour_Z))
+                    return false;
+                
+                VoxPos Pos = new VoxPos(Neighbour_X, Neighbour_Y, Neighbour_Z);
+                return IsWithin(Pos) && Data[To1D(Pos)] != 0;
             }
         }
         
-        public void SetIndex(byte X, byte Y, byte Z, byte Index) => Data[To1D(X, Y, Z)] = Index;
-        public byte GetIndex(byte X, byte Y, byte Z)             => Data[To1D(X, Y, Z)];
+        public void SetIndex(VoxPos Pos, byte Index) => Data[To1D(Pos)] = Index;
+        public byte GetIndex(VoxPos Pos)             => Data[To1D(Pos)];
 
-        public int To1D(byte X, byte Y, byte Z)
+        public int To1D(VoxPos Pos)
         {
-            return X + Y * Size_X + Z * Size_X * Size_Y;
+            return Pos.X + Pos.Y * Size_X + Pos.Z * Size_X * Size_Y;
         }
 
-        public void To3D(int i, out byte X, out byte Y, out byte Z)
+        public VoxPos To3D(int i)
         {
-            X = (byte)(i % Size_X);
-            Y = (byte)(i / Size_X  % Size_Y);
-            Z = (byte)(i / (Size_X * Size_Y));
-        }
-
-        public int GetVoxelsNonAlloc(List<Voxel> Voxels)
-        {
-            Voxels.Clear();
-            int Voxel_Count = 0; 
-            int Data_Len    = Data.Length;
-            for (int i = 0; i < Data_Len; i++)
+            return new VoxPos
             {
-                byte Index = Data[i];
-                if(Index == 0)
-                    continue;
-                Voxels.Add(GetVoxel(i));
-                Voxel_Count++;
-            }
-
-            return Voxel_Count;
-        }
-
-        //Creates Garbage
-        public Voxel[] GetVoxels()
-        {
-            int     Data_Len    = Data.Length;
-            int     Voxel_Count = 0;
-            Voxel[] Voxels      = new Voxel[Data_Len];
-            for (int i = 0; i < Data_Len; i++)
-            {
-                byte Index = Data[i];
-                if(Index == 0)
-                    continue;
-                
-                Voxels[Voxel_Count++] = GetVoxel(i);
-            }
-            
-            Array.Resize(ref Voxels, Voxel_Count);
-            return Voxels;
-        }
-        
-        public void BuildVoxMesh()
-        {
-            //Simple Voxel Generation
-            Voxel[] Voxels     = GetVoxels();
-            int     Voxels_Len = Voxels.Length;
-
-            for (int v = 0; v < Voxels_Len; v++)
-            {
-                
-            }
+                X = (byte)(i % Size_X),
+                Y = (byte)(i / Size_X % Size_Y),
+                Z = (byte)(i / (Size_X * Size_Y))
+            };
         }
     }
-
+    
     public struct Voxel
+    {
+        public VoxPos     Position;
+        public byte       Index;
+        public eDirection Neighbours;
+    }
+
+    public struct VoxPos
     {
         public byte X;
         public byte Y;
         public byte Z;
-        public byte Index;
+        
+        public byte this[int i]
+        {
+            get => i == 0 ? X : i == 1? Y : Z;
+            set
+            {
+                if (i == 0)      X = value;
+                else if (i == 1) Y = value;
+                else             Z = value;
+            }
+        }
+
+        public VoxPos(byte X, byte Y, byte Z)
+        {
+            this.X = X;
+            this.Y = Y;
+            this.Z = Z;
+        }
+
+        public VoxPos(int X, int Y, int Z)
+        {
+            if(!IsValidVoxPos(X, Y, Z))
+                throw new SystemException("Attempted to Create VoxPos with a Coords, out of range of 255");
+            
+            this.X = (byte)X;
+            this.Y = (byte)Y;
+            this.Z = (byte)Z;
+        }
+        
+        public VoxPos(int[] Coord) : this(Coord[0], Coord[1], Coord[2]) {}
+
+        public static bool IsValidVoxPos(int X, int Y, int Z)
+        {
+            if (X < Byte.MinValue || X >= Byte.MaxValue) return false;
+            if (Y < Byte.MinValue || Y >= Byte.MaxValue) return false;
+            if (Z < Byte.MinValue || Z >= Byte.MaxValue) return false;
+
+            return true;
+        }
+
+        public override string ToString() => $"(X:{X}, Y:{Y}, Z:{Z})";
+        
+        public override int GetHashCode() => X.GetHashCode() ^ Y.GetHashCode() << 2 ^ Z.GetHashCode() >> 2;
+        public override bool Equals(object obj) => obj is VoxPos Other && X == Other.X && Y == Other.Y && Z == Other.Z;
+
+        public static VoxPos operator +(VoxPos A, VoxPos B) => new VoxPos(A.X + B.X, A.Y + B.Y, A.Z + B.Z);
+        public static VoxPos operator -(VoxPos A, VoxPos B) => new VoxPos(A.X - B.X, A.Y - B.Y, A.Z - B.Z);
+        public static VoxPos operator *(VoxPos A, float Val) => new VoxPos((byte)(A.X * Val), (byte)(A.Y * Val), (byte)(A.Z * Val));
+        public static VoxPos operator /(VoxPos A, float Val) => new VoxPos((byte)(A.X / Val), (byte)(A.Y / Val), (byte)(A.Z / Val));
+        
+        public static implicit operator Vector3(VoxPos Pos)    => new Vector3(Pos.X, Pos.Y, Pos.Z);
+        public static implicit operator Vector3Int(VoxPos Pos) => new Vector3Int(Pos.X, Pos.Y, Pos.Z);
+        public static implicit operator VoxPos(Vector3 Pos)    => new VoxPos((byte)Pos.x, (byte)Pos.y, (byte)Pos.z);
+        public static implicit operator VoxPos(Vector3Int Pos) => new VoxPos((byte)Pos.x, (byte)Pos.y, (byte)Pos.z);
     }
 }
