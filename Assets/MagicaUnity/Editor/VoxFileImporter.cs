@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 
 using UnityEngine;
-using Unity.Mathematics;
 
 using UnityEditor;
 using UnityEditor.Experimental.AssetImporters;
@@ -17,10 +15,11 @@ namespace MagicaUnity
         
     }
 
-    [ScriptedImporter(1, "vox")]
+    [ScriptedImporter(6, "vox")]
     public class VoxFileImporter : ScriptedImporter
     {
-        private static Dictionary<string, HandleChunk> Handlers = new Dictionary<string,HandleChunk>();
+        private static VoxelMeshBuilder                VoxBuilder = new VoxelMeshBuilder();
+        private static Dictionary<string, HandleChunk> Handlers   = new Dictionary<string,HandleChunk>();
 
         static VoxFileImporter()
         {
@@ -61,8 +60,8 @@ namespace MagicaUnity
                 for (int v = 0; v < Voxels_Len; v++)
                 {
                     byte X     = Reader.ReadByte();
-                    byte Y     = Reader.ReadByte();
                     byte Z     = Reader.ReadByte();
+                    byte Y     = Reader.ReadByte();
                     byte Color = Reader.ReadByte();
                     
                     Model.SetIndex(new VoxPos(X, Y, Z), Color);
@@ -85,8 +84,8 @@ namespace MagicaUnity
 
                 VoxModel Model = File.Models[i] = new VoxModel();
                 Model.Size_X = (byte)Reader.ReadInt32();
-                Model.Size_Y = (byte)Reader.ReadInt32();
                 Model.Size_Z = (byte)Reader.ReadInt32();
+                Model.Size_Y = (byte)Reader.ReadInt32();
                 return;
             }
         }
@@ -109,10 +108,14 @@ namespace MagicaUnity
                 }
             }
         }
+
+        public float Scale = 1f;
         
         public override void OnImportAsset(AssetImportContext ctx)
         {
+            string  Name     = Path.GetFileNameWithoutExtension(ctx.assetPath);
             VoxFile VoxAsset = VoxFile.CreateInstance<VoxFile>();
+            VoxAsset.name    = Name;
             
             using (FileStream   Stream = File.Open(ctx.assetPath, FileMode.Open, FileAccess.Read))
             using (BinaryReader Reader = new BinaryReader(Stream))
@@ -123,6 +126,22 @@ namespace MagicaUnity
 
             if (VoxAsset.Palette == null) //If no Palette has been read, assign the default pallete
                 VoxAsset.Palette = VoxFile.Default_Palette;
+
+            for (int i = 0; i < VoxAsset.Models.Length; i++)
+            {
+                Mesh         Model_Mesh     = new Mesh();
+                VoxModel     Model          = VoxAsset.Models[i];
+                GameObject   Model_Obj      = new GameObject($"{Name}_{i + 1}");
+                MeshFilter   Model_Filter   = Model_Obj.AddComponent<MeshFilter>();
+                MeshRenderer Model_Renderer = Model_Obj.AddComponent<MeshRenderer>();
+
+                Model.Vox_Mesh          = Model_Mesh;
+                Model_Mesh.name         = Model_Obj.name + "_Mesh";
+                Model_Filter.sharedMesh = VoxBuilder.BuildMesh(Model, Model_Mesh, Scale);
+                
+                ctx.AddObjectToAsset(Model_Mesh.name, Model_Mesh);
+                ctx.AddObjectToAsset(Model_Obj.name + "_OBJ", Model_Obj);
+            }
             
             ctx.AddObjectToAsset("VoxFile", VoxAsset);
             ctx.SetMainObject(VoxAsset);

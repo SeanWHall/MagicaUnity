@@ -317,30 +317,6 @@ namespace MagicaUnity
         Forward   = 1 << 5,
         Backwards = 1 << 6
     }
-
-    public static class eDirectionExtensions
-    {
-        public static Vector3Int GetOffset(this eDirection Direction)
-        {
-            switch (Direction)
-            {
-                case eDirection.Up:
-                    return new Vector3Int(0, 1, 0);
-                case eDirection.Down:
-                    return new Vector3Int(0, -1, 0);
-                case eDirection.Left:
-                    return new Vector3Int(1, 0, 0);
-                case eDirection.Right:
-                    return new Vector3Int(1, 0, 0);
-                case eDirection.Forward:
-                    return new Vector3Int(0, 0, 1);
-                case eDirection.Backwards:
-                    return new Vector3Int(0, 0, -1);
-            }
-            
-            return Vector3Int.zero;
-        }
-    }
     
     [Serializable]
     public class VoxModel
@@ -350,8 +326,9 @@ namespace MagicaUnity
         public byte Size_Z;
         
         public byte[] Data; //0 = No Voxel
+        public byte[] Colours;
         public Mesh Vox_Mesh;
-
+        
         public bool IsWithin(VoxPos Pos) => Pos.X < Size_X && Pos.Y < Size_Y && Pos.Z < Size_Z;
         
         public Voxel? GetVoxel(VoxPos Pos)
